@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS learning_paths (
 
 CREATE TABLE IF NOT EXISTS career_pathways (
     employee_id TEXT PRIMARY KEY REFERENCES employees(employee_id),
-    current_role TEXT NOT NULL,
+    "current_role" TEXT NOT NULL,
     current_level TEXT NOT NULL,
     next_role TEXT NOT NULL,
     next_level TEXT NOT NULL,
