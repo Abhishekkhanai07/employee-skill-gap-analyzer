@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+node_modules/
+client/dist/
+server/dist/
+*.tsbuildinfo
+
+# Output (regenerate with `python main.py`)
+output*/
+
+# Local test artifacts and reference PDFs
+.pytest_cache/
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.local
