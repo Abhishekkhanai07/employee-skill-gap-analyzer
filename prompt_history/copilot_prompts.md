@@ -67,6 +67,52 @@ Scope: This file records the user prompts used in this implementation session. A
 
 > Can you please use this languages Layer / Technology: Frontend React + TypeScript; Backend Node.js + Express; Database PostgreSQL; Data generation Python; Testing Jest or Vitest; Charts Recharts.
 
+## Prompt 3
+
+> I have built an employee skill gap analysis and learning recommendation platform for the YottaFlex AI Round 3 coding challenge.
+>
+> Please review my entire existing project against the requirements below. First, inspect the codebase, database schema, data generator, API endpoints, frontend, tests, and README. Do not start rewriting the project or changing the UI before completing the review.
+>
+> ## Project objective
+> Build a working end-to-end system that matches employee skill gaps to courses, prerequisites, budgets, and career pathways, while preserving traceability and producing measurable outputs.
+>
+> ## Required functionality
+> 1. Master data: Employee, Role, Skill, RoleSkillTarget, EmployeeSkill.
+> 2. Course management: Course, CourseSkill, Prerequisite, duration, cost, availability, and capacity.
+> 3. Skill gap calculation based on required and current proficiency.
+> 4. Course recommendations that respect prerequisites, budgets, availability, and capacity.
+> 5. Enrollment, completion, and skill reassessment with explicit event history.
+> 6. Career pathway recommendations.
+> 7. Dashboard metrics and decision traceability.
+> 8. Detection of all five required exception cases:
+>    - Recommendation violates a prerequisite.
+>    - Budget exceeded.
+>    - Completion counted twice.
+>    - Skill gap remains after course completion without reassessment.
+>    - Course unavailable during the planning period.
+>
+> ## Synthetic data requirements
+> Generate 5,000 employees, 500 skills, 1,000 courses, and 10,000 enrollments using a fixed seed of 20261022.
+>
+> Use deterministic IDs and valid foreign keys. Generate valid baseline records first, then inject clearly labelled anomalies. Calculate derived values from source records and maintain separate ground_truth.csv or ground_truth.json files.
+>
+> Verify primary-key uniqueness, foreign-key integrity, lifecycle transitions, arithmetic reconciliation, and reproducibility.
+>
+> ## What I need you to do
+> 1. Compare the existing implementation against every requirement.
+> 2. Identify which features are implemented, partially implemented, or missing.
+> 3. Check whether dashboard metrics are calculated from actual generated data and backend results rather than hardcoded values.
+> 4. Verify the five exception cases are detected correctly.
+> 5. Run the existing tests, data validation, and production build. Fix any failures you discover.
+> 6. Implement missing functionality using the existing architecture and technology stack.
+> 7. Preserve working functionality and the current UI design. Avoid unnecessary refactoring or introducing new dependencies.
+> 8. Update the README with setup instructions, generator commands, validation commands, architecture, business rules, assumptions, limitations, and verification results.
+> 9. Ensure AI prompt history, data dictionary, schema, source manifest, and validation summary are included as required.
+>
+> Do not claim that a feature works unless you have verified it. Do not invent test results, and do not use fabricated metrics to make the application appear complete.
+>
+> After completing the review and fixes, provide a concise summary of what was correct, what changed, test/validation results, and remaining issues. Keep the project locally runnable and suitable for a public GitHub repository.
+
 ## AI-use note
 
 Copilot was used to inspect the supplied project, implement the requested generator/API/UI changes, and run tests/builds. The candidate should review and understand the implementation and personally verify it before submission.

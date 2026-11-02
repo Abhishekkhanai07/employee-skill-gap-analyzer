@@ -183,6 +183,7 @@ def generate_outcome_summary(
     enrollments_df: pd.DataFrame,
     completions_df: pd.DataFrame,
     budgets_df: Optional[pd.DataFrame] = None,
+    employee_skills_df: Optional[pd.DataFrame] = None,
 ) -> dict:
     """Aggregate organisation-wide metrics into a summary dictionary.
 
@@ -303,7 +304,41 @@ def generate_outcome_summary(
         if total_completions > 0
         else 0.0
     )
-    summary["course_success_is_distinct_from_completion"] = True
+    if employee_skills_df is not None and not employee_skills_df.empty:
+        assessments = employee_skills_df.copy()
+        assessments["assessed_date"] = pd.to_datetime(assessments["assessed_date"])
+        assessments = assessments.sort_values(
+            ["employee_id", "skill_id", "assessed_date", "esk_id"]
+        )
+        assessments["prior_proficiency"] = assessments.groupby(
+            ["employee_id", "skill_id"]
+        )["current_proficiency"].shift(1)
+        post_course = assessments[assessments["assessment_type"] == "post_course"]
+        measured_changes = post_course.dropna(subset=["prior_proficiency"])
+        improved_assessments = int(
+            (measured_changes["current_proficiency"] > measured_changes["prior_proficiency"]).sum()
+        )
+        summary["post_course_assessments"] = int(len(post_course))
+        summary["post_course_assessments_with_prior"] = int(len(measured_changes))
+        summary["post_course_assessments_with_gain"] = improved_assessments
+        summary["post_course_skill_gain_rate"] = (
+            round(improved_assessments / len(measured_changes), 4)
+            if not measured_changes.empty
+            else 0.0
+        )
+        summary["average_proficiency_gain"] = (
+            round(float(
+                (measured_changes["current_proficiency"] - measured_changes["prior_proficiency"]).mean()
+            ), 2)
+            if not measured_changes.empty
+            else 0.0
+        )
+    else:
+        summary["post_course_assessments"] = 0
+        summary["post_course_assessments_with_prior"] = 0
+        summary["post_course_assessments_with_gain"] = 0
+        summary["post_course_skill_gain_rate"] = 0.0
+        summary["average_proficiency_gain"] = 0.0
 
     # -- Budget utilisation per department ---------------------------------
     budget_util: dict = {}

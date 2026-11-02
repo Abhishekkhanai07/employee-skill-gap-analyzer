@@ -14,10 +14,11 @@ Usage:
 """
 
 import argparse
-import hashlib
+import contextlib
 import json
 import os
 import sys
+import tempfile
 import time
 
 import pandas as pd
@@ -71,12 +72,6 @@ def apply_scale(scale: float):
     config.NUM_ROLES = max(5, int(config.NUM_ROLES * scale))
     for key in config.EDGE_CASES:
         config.EDGE_CASES[key] = max(1, int(config.EDGE_CASES[key] * scale))
-
-
-def compute_dataframe_hash(df) -> str:
-    """Compute a stable SHA-256 hash of a DataFrame's contents."""
-    csv_bytes = df.to_csv(index=False).encode("utf-8")
-    return hashlib.sha256(csv_bytes).hexdigest()
 
 
 def run_generation(seed: int, output_dir: str, formats: list):
@@ -236,6 +231,7 @@ def run_generation(seed: int, output_dir: str, formats: list):
         skill_gaps, recommendations, learning_paths,
         career_pathways, all_data["enrollments"], all_data["completions"],
         all_data["budgets"],
+        employee_skills_df=all_data["employee_skills"],
     )
 
     export_results = export_all(
@@ -258,60 +254,50 @@ def run_generation(seed: int, output_dir: str, formats: list):
 
 
 def run_reproducibility_check(seed: int, output_dir: str):
-    """Generate data twice with the same seed and compare checksums."""
-    from src.generators.master_data import generate_all_master_data
-    from src.generators.relationship_data import generate_all_relationship_data
+    """Run the full pipeline twice and compare all exported data checksums."""
 
     print("\n" + "=" * 70)
     print("  REPRODUCIBILITY CHECK")
     print("=" * 70)
     print(f"  Seed: {seed}")
-    print("  Generating dataset run 1...")
-
-    master1 = generate_all_master_data(seed=seed)
-    rel1 = generate_all_relationship_data(seed=seed, master_data=master1)
-    data1 = {**master1, **rel1}
-
-    print("  Generating dataset run 2...")
-    master2 = generate_all_master_data(seed=seed)
-    rel2 = generate_all_relationship_data(seed=seed, master_data=master2)
-    data2 = {**master2, **rel2}
-
-    print("\n  Comparing...")
-    all_match = True
-    results = []
-    for table_name in sorted(data1.keys()):
-        df1 = data1[table_name]
-        df2 = data2[table_name]
-        rows_match = len(df1) == len(df2)
-        hash1 = compute_dataframe_hash(df1)
-        hash2 = compute_dataframe_hash(df2)
-        hash_match = hash1 == hash2
-        status = "MATCH" if (rows_match and hash_match) else "MISMATCH"
-        if not (rows_match and hash_match):
-            all_match = False
-        results.append({
-            "table": table_name,
-            "run1_rows": len(df1),
-            "run2_rows": len(df2),
-            "run1_hash": hash1,
-            "run2_hash": hash2,
-            "status": status,
-        })
-        print(f"    {table_name:25s}  rows: {len(df1):>7,} vs {len(df2):>7,}  "
-              f"hash: {hash1[:12]}... vs {hash2[:12]}...  {status}")
-
-    # Save reproducibility report
-    report_path = os.path.join(output_dir, "reproducibility_report.json")
     os.makedirs(output_dir, exist_ok=True)
-    with open(report_path, "w") as f:
-        json.dump({
-            "seed": seed,
-            "all_match": all_match,
-            "tables": results,
-        }, f, indent=2)
+    with tempfile.TemporaryDirectory(prefix="yottaflex-repro-") as temp_dir:
+        manifests = []
+        with open(os.devnull, "w", encoding="utf-8") as sink:
+            with contextlib.redirect_stdout(sink):
+                for run_number in (1, 2):
+                    run_dir = os.path.join(temp_dir, f"run{run_number}")
+                    run_generation(seed, run_dir, ["csv", "json", "sql"])
+                    with open(
+                        os.path.join(run_dir, "source_manifest.json"),
+                        encoding="utf-8",
+                    ) as manifest_file:
+                        manifests.append(json.load(manifest_file))
 
-    print(f"\n  Overall: {'ALL TABLES MATCH' if all_match else 'MISMATCH DETECTED'}")
+    first, second = manifests
+    row_counts_match = first["row_counts"] == second["row_counts"]
+    checksums_match = (
+        first["generated_files_sha256"] == second["generated_files_sha256"]
+    )
+    all_match = row_counts_match and checksums_match
+    report = {
+        "seed": seed,
+        "all_match": all_match,
+        "row_counts_match": row_counts_match,
+        "checksums_match": checksums_match,
+        "row_counts": first["row_counts"],
+        "ground_truth_rows": first["ground_truth_rows"],
+        "generated_files_sha256": first["generated_files_sha256"],
+    }
+    report_path = os.path.join(output_dir, "reproducibility_report.json")
+    with open(report_path, "w", encoding="utf-8") as report_file:
+        json.dump(report, report_file, indent=2, sort_keys=True)
+        report_file.write("\n")
+
+    print(f"  Generated file checksums: {len(first['generated_files_sha256'])}")
+    print(f"  Row counts match       : {row_counts_match}")
+    print(f"  Checksums match        : {checksums_match}")
+    print(f"  Overall: {'ALL OUTPUTS MATCH' if all_match else 'MISMATCH DETECTED'}")
     print(f"  Report saved to: {report_path}")
     return all_match
 
@@ -338,7 +324,7 @@ def main():
             "role_skill_targets", "employee_skills", "course_skills",
             "prerequisites", "enrollments", "enrollment_events",
             "completions", "budget_events", "skill_gaps",
-            "recommendations", "learning_paths",
+            "recommendations", "learning_paths", "career_pathways",
         ]
         data = {}
         for table in required_tables:

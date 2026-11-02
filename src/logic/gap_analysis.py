@@ -213,7 +213,7 @@ def recommend_courses(
     enrolled_counts: Dict[str, int] = {}
     if enrollments_df is not None and not enrollments_df.empty:
         active_enrollments = enrollments_df[
-            enrollments_df["status"] != "dropped"
+            enrollments_df["status"].isin({"enrolled", "in_progress", "completed"})
         ]
         enrolled_counts = active_enrollments["course_id"].value_counts().to_dict()
 

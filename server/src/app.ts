@@ -26,8 +26,16 @@ export function createApp(pool: Pick<Pool, "query">) {
   app.get("/api/dashboard/summary", async (_request, response) => {
     const [metrics, budgetRows, topGaps, rejectionRows] = await Promise.all([
       pool.query(`
+        WITH skill_assessment_changes AS (
+          SELECT assessment_type, current_proficiency,
+            LAG(current_proficiency) OVER (
+              PARTITION BY employee_id, skill_id
+              ORDER BY assessed_date, esk_id
+            ) AS prior_proficiency
+          FROM employee_skills
+        )
         SELECT
-          (SELECT COUNT(*) FROM employees WHERE status <> 'terminated')::int AS employees,
+          (SELECT COUNT(*) FROM employees)::int AS employees,
           (SELECT COUNT(DISTINCT employee_id) FROM skill_gaps WHERE gap > 0)::int AS employees_with_gaps,
           (SELECT COUNT(*) FROM skill_gaps WHERE gap > 0)::int AS open_skill_gaps,
           COALESCE((SELECT ROUND(AVG(readiness_score)::numeric, 1) FROM career_pathways), 0) AS readiness_score,
@@ -36,7 +44,13 @@ export function createApp(pool: Pick<Pool, "query">) {
           (SELECT COUNT(*) FROM enrollments)::int AS enrollments,
           (SELECT COUNT(DISTINCT enrollment_id) FROM completions)::int AS unique_completions,
           (SELECT COUNT(DISTINCT enrollment_id) FROM completions WHERE passed)::int AS passed_completions,
-          (SELECT COUNT(*) - COUNT(DISTINCT enrollment_id) FROM completions)::int AS duplicate_completion_events
+          (SELECT COUNT(*) - COUNT(DISTINCT enrollment_id) FROM completions)::int AS duplicate_completion_events,
+          (SELECT COUNT(*) FROM skill_assessment_changes WHERE assessment_type = 'post_course')::int AS post_course_assessments,
+          (SELECT COUNT(*) FROM skill_assessment_changes WHERE assessment_type = 'post_course' AND prior_proficiency IS NOT NULL)::int AS post_course_assessments_with_prior,
+          (SELECT COUNT(*) FROM skill_assessment_changes WHERE assessment_type = 'post_course' AND current_proficiency > prior_proficiency)::int AS post_course_assessments_with_gain,
+          COALESCE((SELECT ROUND(AVG(current_proficiency - prior_proficiency)::numeric, 2)
+            FROM skill_assessment_changes
+            WHERE assessment_type = 'post_course' AND prior_proficiency IS NOT NULL), 0) AS average_proficiency_gain
       `),
       pool.query(`
         SELECT department, total_budget, spent, remaining,
@@ -75,6 +89,13 @@ export function createApp(pool: Pick<Pool, "query">) {
       pass_rate: completions
         ? Number((Number(row.passed_completions) / completions).toFixed(3))
         : 0,
+      post_course_skill_gain_rate: Number(row.post_course_assessments_with_prior)
+        ? Number((
+          Number(row.post_course_assessments_with_gain)
+          / Number(row.post_course_assessments_with_prior)
+        ).toFixed(3))
+        : 0,
+      average_proficiency_gain: Number(row.average_proficiency_gain),
       budgets: budgetRows.rows.map((budget) => ({
         ...budget,
         total_budget: Number(budget.total_budget),

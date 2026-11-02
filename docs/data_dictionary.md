@@ -115,7 +115,7 @@ Budget  (per department per year)
 | assessment_type     | str  | Yes      | No     | `baseline`, `post_course`          |
 | source_completion_id| str  | No       | No     | FK → Completion.completion_id; required for `post_course` |
 
-**Note:** Event-sourced. Multiple assessments per (employee, skill) are permitted; the latest by date is the current proficiency. Post-course records retain the completion event that triggered reassessment.
+**Note:** Event-sourced. Multiple assessments per (employee, skill) are permitted; the latest by date is the current proficiency. Post-course records retain the passed completion event that triggered reassessment, and their assessment date must be later than completion.
 
 ### 6. Course
 
@@ -229,10 +229,18 @@ Completions represent outcomes, not attendance. Duplicate completion events are 
 | prerequisite_violation  | 50    | Rejected recommendation candidate whose prerequisite is not passed |
 | budget_exceeded         | 30    | Rejected recommendation candidate that exceeds the remaining budget |
 | duplicate_completion    | 25    | Same enrollment has a second labelled completion event            |
-| no_reassessment         | 40    | Completion has no later linked post-course skill assessment        |
+| no_reassessment         | 40    | A passed course taught a skill below the employee's role target, but no later assessment exists for that skill |
 | course_unavailable      | 35    | Rejected recommendation candidate unavailable in the planning period |
 
-Counts are generation targets and scale with `--starter`; counts may be lower if fewer eligible examples exist. The first, second, and fifth cases label rejected recommendation candidates, not invalid enrollments or committed overspend. All cases are tracked in `ground_truth.csv` / `ground_truth.json`, never leaked into input features.
+Counts are generation targets and scale with `--starter`; counts may be lower if fewer eligible examples exist. The first, second, and fifth cases label rejected recommendation candidates, not invalid enrollments or committed overspend. `no_reassessment` includes the affected `skill_id`, observed proficiency, and role target so validators can confirm that a real gap remained. All cases are tracked in `ground_truth.csv` / `ground_truth.json`, never leaked into input features.
+
+## Effective dates and lifecycle interpretation
+
+- Role skill targets are static within this synthetic 2026 planning snapshot; no target history is modeled.
+- Employee skill assessments are effective on `assessed_date`; the latest assessment for an employee/skill pair is used for gap calculations.
+- Course eligibility is based on the overlap between course availability dates and the 2026 planning period. Course `status` is a lifecycle state.
+- Enrollment `status` is the current snapshot; `EnrollmentEvent` retains each dated transition. Completion is an outcome event, not an enrollment state substitute.
+- Budget is annual and keyed by department/year. `BudgetEvent` records planned pathway commitments; `spent` is reconciled from these commitments and is not accounting history.
 
 ---
 

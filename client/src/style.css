@@ -17,7 +17,7 @@ button, input, select { font: inherit; }
 .brand-copy strong { font: 800 14px "Segoe UI", sans-serif; letter-spacing: -.3px; }
 .brand-copy span { color: #8792a5; font-size: 10px; }
 .top-nav { display: flex; gap: 30px; margin-left: 64px; height: 100%; align-items: center; color: #8b95a8; font-size: 12px; }
-.top-nav span { height: 100%; display: flex; align-items: center; }
+.top-nav button { height: 100%; display: flex; align-items: center; padding: 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .top-nav .nav-active { color: #4f62df; border-bottom: 2px solid #5b6df2; font-weight: 700; }
 .planning-pill { display: flex; align-items: center; gap: 8px; margin-left: auto; padding: 9px 13px; border: 1px solid #e5e9f1; background: white; border-radius: 20px; color: #59667b; font-size: 11px; }
 .planning-pill span { width: 7px; height: 7px; border-radius: 50%; background: #13b89a; box-shadow: 0 0 0 3px #13b89a22; }
@@ -85,7 +85,7 @@ td small { display: block; color: #9ba5b4; font-size: 9px; margin-top: 4px; }
   .app-shell { padding: 0 22px 30px; }.metric-grid { grid-template-columns: repeat(2, 1fr); }.chart-grid { grid-template-columns: 1fr; }.top-nav { margin-left: 30px; }
 }
 @media (max-width: 600px) {
-  .app-shell { padding: 0 14px 24px; }.topbar { height: 64px; }.top-nav { display: none; }.planning-pill { font-size: 9px; padding: 8px; }
+  .app-shell { padding: 0 14px 24px; }.topbar { height: 64px; }.top-nav { margin-left: auto; gap: 9px; font-size: 9px; }.planning-pill { display: none; }
   .page-heading { align-items: flex-start; gap: 13px; flex-direction: column; }.page-heading h1 { font-size: 24px; }.metric-grid { gap: 8px; }.metric-card { padding: 14px 12px; min-height: 103px; }.metric-value { font-size: 21px; }
   .chart-panel { padding: 15px 11px; }.recommendation-heading { padding: 16px 13px 12px; }.filters { padding: 0 13px 12px; flex-wrap: wrap; }.search-field { max-width: none; flex-basis: 100%; }.toggle-label { margin-left: 0; }
 }

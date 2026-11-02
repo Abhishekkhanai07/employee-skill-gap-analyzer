@@ -81,6 +81,13 @@ def test_recommendation_rejects_unavailable_over_budget_and_full_courses():
     assert not full.iloc[0]["capacity_available"]
     assert not full.iloc[0]["recommendation_feasible"]
 
+    waitlisted = _recommendations(
+        [_course("CRS-000005", capacity=1)],
+        enrollments=[{"course_id": "CRS-000005", "status": "waitlisted"}],
+    )
+    assert waitlisted.iloc[0]["capacity_available"]
+    assert waitlisted.iloc[0]["recommendation_feasible"]
+
 
 def test_feasible_course_is_selected_and_sequenced():
     recs = _recommendations([_course("CRS-000004")])

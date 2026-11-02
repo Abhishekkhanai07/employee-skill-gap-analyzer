@@ -90,29 +90,77 @@ def inject_edge_cases(
                 expected_decision="count_enrollment_once",
             ))
 
-    # A completion is a negative example if no later skill assessment exists.
+    # Label a missing reassessment only when the passed course taught a skill
+    # that was below the employee's role target and no later assessment exists.
     employee_skills = data["employee_skills"]
     course_skills = data["course_skills"]
     if not completions.empty and not employee_skills.empty:
-        reassessments = employee_skills[
-            employee_skills["assessment_type"] == "post_course"
+        role_skill_targets = data["employees"][["employee_id", "role_id"]].merge(
+            data["role_skill_targets"][["role_id", "skill_id", "target_proficiency"]],
+            on="role_id",
+        )
+        baseline = employee_skills[
+            employee_skills["assessment_type"] == "baseline"
+        ].copy()
+        baseline["assessed_date"] = pd.to_datetime(baseline["assessed_date"])
+        baseline = baseline.sort_values("assessed_date").drop_duplicates(
+            ["employee_id", "skill_id"], keep="last"
+        )
+        remaining_gaps = (
+            completions[completions["passed"].astype(bool)]
+            .merge(course_skills[["course_id", "skill_id"]], on="course_id")
+            .merge(role_skill_targets, on=["employee_id", "skill_id"])
+            .merge(
+                baseline[["employee_id", "skill_id", "current_proficiency"]],
+                on=["employee_id", "skill_id"],
+                how="left",
+            )
+        )
+        remaining_gaps["current_proficiency"] = remaining_gaps[
+            "current_proficiency"
+        ].fillna(0).astype(int)
+        remaining_gaps["completion_date"] = pd.to_datetime(
+            remaining_gaps["completion_date"]
+        )
+        remaining_gaps = remaining_gaps[
+            remaining_gaps["current_proficiency"] < remaining_gaps["target_proficiency"]
         ]
-        reassessed_completions = set(reassessments["source_completion_id"].dropna())
-        for completion in completions.itertuples(index=False):
-            if completion.completion_id not in reassessed_completions:
+        if not remaining_gaps.empty:
+            later_assessments = employee_skills[
+                ["employee_id", "skill_id", "assessed_date"]
+            ].copy()
+            later_assessments["assessed_date"] = pd.to_datetime(
+                later_assessments["assessed_date"]
+            )
+            checked = remaining_gaps.merge(
+                later_assessments,
+                on=["employee_id", "skill_id"],
+                how="left",
+            )
+            later_keys = set(checked.loc[
+                checked["assessed_date"] > checked["completion_date"], "completion_id"
+            ])
+            eligible = remaining_gaps[
+                ~remaining_gaps["completion_id"].isin(later_keys)
+            ].sort_values(["completion_id", "skill_id"]).drop_duplicates("completion_id")
+            for completion in eligible.head(
+                config.EDGE_CASES["no_reassessment"]
+            ).itertuples(index=False):
                 ground_truth.append(_ground_truth_row(
                     "no_reassessment",
                     "completion",
                     completion.completion_id,
                     employee_id=completion.employee_id,
                     course_id=completion.course_id,
+                    skill_id=completion.skill_id,
                     expected_decision="do_not_credit_skill_gain_without_reassessment",
+                    current_proficiency=completion.current_proficiency,
+                    target_proficiency=completion.target_proficiency,
                 ))
-                if sum(row["issue_type"] == "no_reassessment" for row in ground_truth) >= config.EDGE_CASES["no_reassessment"]:
-                    break
 
     result = pd.DataFrame(ground_truth, columns=[
         "issue_type", "entity_type", "entity_id", "employee_id", "course_id",
         "skill_id", "enrollment_id", "expected_decision",
+        "current_proficiency", "target_proficiency",
     ])
     return data, result

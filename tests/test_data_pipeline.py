@@ -1,7 +1,9 @@
+import json
+
 import pandas as pd
 
 import config
-from main import run_generation
+from main import run_generation, run_reproducibility_check
 from src.generators.master_data import generate_all_master_data
 from src.generators.relationship_data import generate_all_relationship_data
 from src.validation.validators import run_all_validations
@@ -13,6 +15,7 @@ def _small_dataset(monkeypatch):
     monkeypatch.setattr(config, "NUM_COURSES", 36)
     monkeypatch.setattr(config, "NUM_ENROLLMENTS", 24)
     monkeypatch.setattr(config, "NUM_ROLES", 8)
+    monkeypatch.setattr(config, "BUDGET_PER_DEPARTMENT", (50, 100))
     master = generate_all_master_data(seed=20261022)
     transactions = generate_all_relationship_data(seed=20261022, master_data=master)
     return {**master, **transactions}
@@ -49,6 +52,7 @@ def test_end_to_end_starter_export_validates_and_keeps_ground_truth_separate(mon
     monkeypatch.setattr(config, "NUM_COURSES", 36)
     monkeypatch.setattr(config, "NUM_ENROLLMENTS", 24)
     monkeypatch.setattr(config, "NUM_ROLES", 8)
+    monkeypatch.setattr(config, "BUDGET_PER_DEPARTMENT", (50, 100))
     monkeypatch.setattr(config, "EDGE_CASES", {
         "prerequisite_violation": 2,
         "budget_exceeded": 2,
@@ -69,3 +73,34 @@ def test_end_to_end_starter_export_validates_and_keeps_ground_truth_separate(mon
     assert (tmp_path / "source_manifest.json").is_file()
     assert (tmp_path / "validation_summary.json").is_file()
     assert "ground_truth" not in (tmp_path / "seed.sql").read_text(encoding="utf-8")
+    assert set(data["ground_truth"]["issue_type"]) == {
+        "prerequisite_violation",
+        "budget_exceeded",
+        "duplicate_completion",
+        "no_reassessment",
+        "course_unavailable",
+    }
+
+
+def test_reproducibility_command_compares_derived_exports(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "NUM_EMPLOYEES", 18)
+    monkeypatch.setattr(config, "NUM_SKILLS", 24)
+    monkeypatch.setattr(config, "NUM_COURSES", 36)
+    monkeypatch.setattr(config, "NUM_ENROLLMENTS", 24)
+    monkeypatch.setattr(config, "NUM_ROLES", 8)
+    monkeypatch.setattr(config, "BUDGET_PER_DEPARTMENT", (50, 100))
+    monkeypatch.setattr(config, "EDGE_CASES", {
+        "prerequisite_violation": 2,
+        "budget_exceeded": 2,
+        "duplicate_completion": 2,
+        "no_reassessment": 2,
+        "course_unavailable": 2,
+    })
+
+    assert run_reproducibility_check(20261022, str(tmp_path))
+
+    report = json.loads((tmp_path / "reproducibility_report.json").read_text())
+    assert report["row_counts_match"]
+    assert report["checksums_match"]
+    assert "recommendations" in report["row_counts"]
+    assert "ground_truth.csv" in report["generated_files_sha256"]

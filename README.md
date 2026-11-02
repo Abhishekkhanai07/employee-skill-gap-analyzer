@@ -25,6 +25,17 @@ The project uses synthetic data only. Faker-generated names and `example.test` e
 | Tests | pytest and Vitest |
 | Charts | Recharts |
 
+## Architecture
+
+- `src/generators/` builds seeded master data, relationships, and traceable lifecycle events.
+- `src/logic/` calculates proficiency gaps, feasible recommendations, learning plans, career readiness, and outcome metrics.
+- `src/validation/` checks keys, references, lifecycle transitions, capacity, recommendation constraints, budgets, and labelled exceptions.
+- `src/export/` writes CSV, JSON, SQL seed files, SHA-256 source manifest, validation summary, and outcome summary.
+- `database/schema.sql` defines the PostgreSQL tables, keys, constraints, and indexes.
+- `server/src/` contains the Express API; dashboard metrics and career-pathway records are queried from PostgreSQL.
+- `client/src/` contains the React + TypeScript dashboard and Recharts visualizations.
+- `tests/` contains Python generator/business-rule tests and Vitest API tests.
+
 ## Requirements
 
 - Python 3.10 or later
@@ -42,6 +53,12 @@ python -m pip install -r requirements.txt
 npm install
 Copy-Item .env.example .env
 docker compose up -d db
+```
+
+If PowerShell says `docker` is not recognized after installing Docker Desktop, restart the terminal (or VS Code) so it reloads PATH. For a per-user Docker Desktop install, the bundled CLI can be called directly:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" compose up -d db
 ```
 
 Generate and validate the smaller starter dataset first:
@@ -98,11 +115,17 @@ The reproducibility report is written to `output\reproducibility_report.json`; i
 
 - The complete field-level dictionary, constraints, and relationship cardinalities are in [docs/data_dictionary.md](docs/data_dictionary.md); the machine-readable entity schema is [src/schema.py](src/schema.py).
 - PostgreSQL constraints and indexes are in [database/schema.sql](database/schema.sql).
+- Skill gaps are `max(target proficiency - latest assessed proficiency, 0)`. Employees without an assessment for a targeted skill start at proficiency 0.
+- A course can be recommended only when it teaches the skill at the target level and is active, available during 2026, has remaining capacity, fits the employee department's remaining budget, and its prerequisites have passed. Waitlisted and dropped enrollments do not consume course capacity.
+- Only feasible rank-1 recommendations are sequenced into learning paths. Missing prerequisite courses are surfaced for review, not silently added to a path.
 - `Budget.spent` in the generated planning snapshot is the sum of unique employee/course costs in selected learning paths; it is not represented as historical accounting spend.
 - `recommendations.csv` contains candidate decisions and rejection reasons. Only feasible rank-1 recommendations are sequenced into learning paths.
 - `completion_rate` counts distinct enrollments with completion events. `pass_rate` is calculated from distinct completion outcomes, not attendance.
+- Post-course skill-gain metrics compare an assessment with the previous assessment for that employee/skill; assessments without a prior comparison are reported separately and are not counted as proficiency gains.
+- Career readiness is the share of the employee's targeted skills meeting their current role targets. The next role is the next configured level in the same department; a pathway row is not a promotion decision.
 - The starter mode scales all primary volumes to 10% while keeping the same generation rules and seed. The full mode defaults to the exact requested primary volumes.
-- Only the core Python pipeline and API query behavior have automated tests; live PostgreSQL integration requires the local database setup above.
+- The five exception labels are source-grounded: prerequisite, budget, and availability labels point to rejected candidates; duplicate completion labels the extra event; missing-reassessment labels require a passed course that teaches a below-target role skill with no later assessment for that skill.
+- The checked-in `docs/source_manifest.json` and `docs/validation_summary.json` are generated full-volume evidence snapshots for seed `20261022`. Regenerate the full data to produce current exports under `output\`.
 
 ## Provenance and AI-use disclosure
 
@@ -114,3 +137,21 @@ All records are generated locally from seeded Python randomness and Faker; no pu
 - Courses that fail a prerequisite are surfaced as rejected candidates; the planner does not automatically add missing prerequisite courses as path steps.
 - The generator emits the requested anomaly examples at configured scale; starter mode scales the edge-case counts as well.
 - PostgreSQL is not bundled as a binary. Use Docker Compose or point `DATABASE_URL` in `.env` at a local PostgreSQL 16 instance.
+- Generated datasets are not committed; the manifest records their row counts and checksums so they can be regenerated and verified.
+
+## Verification
+
+Verified with seed `20261022`:
+
+| Check | Result |
+|---|---|
+| Full-scale generation | 5,000 employees, 500 skills, 1,000 courses, 10,000 enrollments |
+| Full-data validation | 87 checks: 86 passed, 0 failed, 1 expected warning for labelled duplicate completion events |
+| Full-output reproducibility | Two complete runs matched row counts and SHA-256 checksums for all 39 generated data/summary files |
+| Python tests | 9 passed |
+| Vitest API tests | 6 passed |
+| Production build | Client and server built successfully; Vite reports a 619 KB minified client chunk |
+| Dependency audit | 0 vulnerabilities |
+| PostgreSQL smoke test | Schema and starter seed loaded; API health returned `database: connected`; summary and career-pathway endpoints returned database records |
+
+The expected duplicate-completion warning is preserved in ground truth and counted once in completion-rate metrics. The large-client-chunk warning is non-fatal.

@@ -1,0 +1,446 @@
+{
+  "checks": [
+    {
+      "detail": "0 duplicate employee_id value(s)",
+      "name": "employees.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match EMP-\\d{6}",
+      "name": "employees.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate role_id value(s)",
+      "name": "roles.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match ROL-\\d{6}",
+      "name": "roles.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate skill_id value(s)",
+      "name": "skills.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match SKL-\\d{6}",
+      "name": "skills.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate rst_id value(s)",
+      "name": "role_skill_targets.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match RST-\\d{6}",
+      "name": "role_skill_targets.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate esk_id value(s)",
+      "name": "employee_skills.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match ESK-\\d{6}",
+      "name": "employee_skills.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate course_id value(s)",
+      "name": "courses.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match CRS-\\d{6}",
+      "name": "courses.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate csk_id value(s)",
+      "name": "course_skills.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match CSK-\\d{6}",
+      "name": "course_skills.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate prq_id value(s)",
+      "name": "prerequisites.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match PRQ-\\d{6}",
+      "name": "prerequisites.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate enrollment_id value(s)",
+      "name": "enrollments.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate event_id value(s)",
+      "name": "enrollment_events.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match EEV-\\d{6}",
+      "name": "enrollment_events.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate completion_id value(s)",
+      "name": "completions.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match CMP-\\d{4}-\\d{6}",
+      "name": "completions.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate budget_id value(s)",
+      "name": "budgets.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate event_id value(s)",
+      "name": "budget_events.primary_key_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 ID(s) do not match BGE-\\d{6}",
+      "name": "budget_events.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "employees.role_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "skill_gaps.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "skill_gaps.role_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "skill_gaps.skill_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "recommendations.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "recommendations.skill_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "recommendations.recommended_course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "learning_paths.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "learning_paths.course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "learning_paths.skill_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "career_pathways.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "budget_events.budget_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "budget_events.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "budget_events.course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "role_skill_targets.role_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "role_skill_targets.skill_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "employee_skills.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "employee_skills.skill_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "course_skills.course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "course_skills.skill_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "prerequisites.course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "prerequisites.prerequisite_course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "enrollments.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "enrollments.course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "enrollment_events.enrollment_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "completions.enrollment_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "completions.employee_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved reference(s)",
+      "name": "completions.course_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 budget ID(s) do not match department/year",
+      "name": "budgets.id_format",
+      "status": "passed"
+    },
+    {
+      "detail": "0 enrollment ID(s) mismatch their references",
+      "name": "enrollments.id_matches_employee_course",
+      "status": "passed"
+    },
+    {
+      "detail": "0 unresolved completion reference(s)",
+      "name": "employee_skills.source_completion_id_foreign_key",
+      "status": "passed"
+    },
+    {
+      "detail": "0 post-course assessment(s) lack a later passed completion for the same employee",
+      "name": "employee_skills.post_course_links_valid_passed_completion",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid value(s); expected ['active', 'on_leave', 'terminated']",
+      "name": "employees.status_enum",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid value(s); expected ['active', 'archived', 'inactive']",
+      "name": "courses.status_enum",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid value(s); expected ['completed', 'dropped', 'enrolled', 'in_progress', 'waitlisted']",
+      "name": "enrollments.status_enum",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid value(s); expected ['completed', 'dropped', 'enrolled', 'in_progress', 'waitlisted']",
+      "name": "enrollment_events.event_type_enum",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid value(s); expected ['completed', 'dropped', 'enrolled', 'in_progress', 'waitlisted']",
+      "name": "enrollment_events.status_after_enum",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid value(s); expected ['baseline', 'post_course']",
+      "name": "employee_skills.assessment_type_enum",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid value(s); expected ['critical', 'high', 'low', 'medium']",
+      "name": "role_skill_targets.priority_enum",
+      "status": "passed"
+    },
+    {
+      "detail": "Baseline assessments have no completion source; post-course records reference one.",
+      "name": "employee_skills.assessment_source_traceable",
+      "status": "passed"
+    },
+    {
+      "detail": "0 completion date(s) precede enrollment",
+      "name": "completions.date_after_enrollment",
+      "status": "passed"
+    },
+    {
+      "detail": "0 completion(s) have non-completed enrollment status",
+      "name": "completions.enrollment_lifecycle",
+      "status": "passed"
+    },
+    {
+      "detail": "0 completion(s) do not match their enrollment",
+      "name": "completions.match_enrollment_employee_course",
+      "status": "passed"
+    },
+    {
+      "detail": "50 completion row(s) participate in duplicate events; 25 duplicate event(s) are labelled ground truth",
+      "name": "completions.one_event_per_enrollment",
+      "status": "warning"
+    },
+    {
+      "detail": "0 enrollment snapshot(s) differ from event history",
+      "name": "enrollment_events.match_current_status",
+      "status": "passed"
+    },
+    {
+      "detail": "0 lifecycle event(s) predate enrollment",
+      "name": "enrollment_events.date_after_enrollment",
+      "status": "passed"
+    },
+    {
+      "detail": "0 invalid lifecycle transition(s)",
+      "name": "enrollment_events.valid_state_transitions",
+      "status": "passed"
+    },
+    {
+      "detail": "0 course(s) exceed enrollment capacity",
+      "name": "enrollments.course_capacity",
+      "status": "passed"
+    },
+    {
+      "detail": "0 budget row(s) do not reconcile",
+      "name": "budgets.total_spent_remaining_reconcile",
+      "status": "passed"
+    },
+    {
+      "detail": "0 skill gap(s) do not equal max(target-current, 0)",
+      "name": "skill_gaps.proficiency_arithmetic",
+      "status": "passed"
+    },
+    {
+      "detail": "0 over/negative budget row(s)",
+      "name": "budgets.within_limit",
+      "status": "passed"
+    },
+    {
+      "detail": "0 budget row(s) differ from event-ledger totals",
+      "name": "budgets.spent_matches_budget_events",
+      "status": "passed"
+    },
+    {
+      "detail": "0 budget row(s) differ from selected path costs",
+      "name": "budgets.spent_matches_learning_paths",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate role/skill pair(s)",
+      "name": "role_skill_targets.unique_pair",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate course/skill pair(s)",
+      "name": "course_skills.unique_pair",
+      "status": "passed"
+    },
+    {
+      "detail": "0 prerequisite edge(s) do not point to an earlier course",
+      "name": "prerequisites.acyclic_order",
+      "status": "passed"
+    },
+    {
+      "detail": "0 enrollment(s) violate prerequisite completion order",
+      "name": "enrollments.prerequisites_precede",
+      "status": "passed"
+    },
+    {
+      "detail": "0 feasible recommendation(s) fail a required constraint",
+      "name": "recommendations.feasible_constraints",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate recommendation candidate(s)",
+      "name": "recommendations.employee_skill_course_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate row(s) for key ['employee_id', 'skill_id']",
+      "name": "skill_gaps.employee_skill_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate row(s) for key ['employee_id', 'path_step']",
+      "name": "learning_paths.employee_step_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "0 duplicate row(s) for key ['employee_id']",
+      "name": "career_pathways.employee_unique",
+      "status": "passed"
+    },
+    {
+      "detail": "Missing issue types: []; 0 invalid decisions; 0 unmatched candidates; 0 candidates without the labelled exception; 0 invalid duplicate labels; 0 invalid remaining-gap/no-reassessment labels",
+      "name": "ground_truth.required_exceptions_match_source_records",
+      "status": "passed"
+    }
+  ],
+  "passed": true,
+  "summary": {
+    "failed": 0,
+    "passed": 86,
+    "total": 87,
+    "warnings": 1
+  }
+}

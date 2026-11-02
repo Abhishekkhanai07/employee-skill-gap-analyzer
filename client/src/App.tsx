@@ -38,6 +38,11 @@ type Summary = {
   unique_completions: number;
   passed_completions: number;
   duplicate_completion_events: number;
+  post_course_assessments: number;
+  post_course_assessments_with_prior: number;
+  post_course_assessments_with_gain: number;
+  post_course_skill_gain_rate: number;
+  average_proficiency_gain: number;
   completion_rate: number;
   pass_rate: number;
   budgets: Budget[];
@@ -64,6 +69,21 @@ type Recommendation = {
   rejection_reasons: string;
 };
 
+type CareerPathway = {
+  employee_id: string;
+  department: string;
+  current_role: string;
+  current_level: string;
+  next_role: string;
+  next_level: string;
+  total_gaps: number;
+  critical_gaps: number;
+  courses_needed: number;
+  estimated_cost: number | string;
+  estimated_hours: number | string;
+  readiness_score: number | string;
+};
+
 const COLORS = ["#536dfe", "#13b89a", "#f7a94b", "#ec6b75", "#8969dc", "#53a9d8"];
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -78,11 +98,16 @@ async function loadJson<T>(url: string): Promise<T> {
 function App() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [careerPathways, setCareerPathways] = useState<CareerPathway[]>([]);
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("");
+  const [pathwayDepartment, setPathwayDepartment] = useState("");
   const [includeRejected, setIncludeRejected] = useState(false);
+  const [activeView, setActiveView] = useState<"learning" | "career">("learning");
   const [loading, setLoading] = useState(true);
+  const [pathwaysLoading, setPathwaysLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pathwaysError, setPathwaysError] = useState("");
 
   const recommendationUrl = useMemo(() => {
     const query = new URLSearchParams({ limit: "50" });
@@ -91,6 +116,13 @@ function App() {
     if (includeRejected) query.set("includeRejected", "true");
     return `/api/recommendations?${query.toString()}`;
   }, [department, includeRejected, search]);
+
+  const careerPathwayUrl = useMemo(() => {
+    const query = new URLSearchParams();
+    if (pathwayDepartment) query.set("department", pathwayDepartment);
+    const suffix = query.toString();
+    return `/api/career-pathways${suffix ? `?${suffix}` : ""}`;
+  }, [pathwayDepartment]);
 
   useEffect(() => {
     let active = true;
@@ -111,11 +143,31 @@ function App() {
     return () => { active = false; };
   }, [recommendationUrl]);
 
+  useEffect(() => {
+    let active = true;
+    setPathwaysLoading(true);
+    setPathwaysError("");
+    loadJson<{ career_pathways: CareerPathway[] }>(careerPathwayUrl)
+      .then((result) => {
+        if (active) setCareerPathways(result.career_pathways);
+      })
+      .catch((reason: unknown) => {
+        if (active) {
+          setPathwaysError(reason instanceof Error ? reason.message : "Unable to load career pathways.");
+        }
+      })
+      .finally(() => {
+        if (active) setPathwaysLoading(false);
+      });
+    return () => { active = false; };
+  }, [careerPathwayUrl]);
+
   const metricCards = summary ? [
-    { label: "Active employees", value: summary.employees.toLocaleString(), detail: `${summary.employees_with_gaps.toLocaleString()} have skill gaps`, accent: "blue" },
+    { label: "Employee records", value: summary.employees.toLocaleString(), detail: `${summary.employees_with_gaps.toLocaleString()} have skill gaps`, accent: "blue" },
     { label: "Open skill gaps", value: summary.open_skill_gaps.toLocaleString(), detail: `${summary.readiness_score}% average role readiness`, accent: "purple" },
     { label: "Feasible learning matches", value: summary.feasible_recommendations.toLocaleString(), detail: `${summary.rejected_candidates.toLocaleString()} candidates held for review`, accent: "green" },
     { label: "Course completion rate", value: `${(summary.completion_rate * 100).toFixed(1)}%`, detail: `${(summary.pass_rate * 100).toFixed(1)}% of distinct completions passed`, accent: "orange" },
+    { label: "Post-course skill gain", value: `${(summary.post_course_skill_gain_rate * 100).toFixed(1)}%`, detail: `${summary.post_course_assessments_with_gain.toLocaleString()} of ${summary.post_course_assessments_with_prior.toLocaleString()} assessed changes improved; avg. ${summary.average_proficiency_gain.toFixed(2)} levels`, accent: "purple" },
   ] : [];
 
   return (
@@ -123,7 +175,10 @@ function App() {
       <header className="topbar">
         <div className="brand-mark">Y</div>
         <div className="brand-copy"><strong>YottaFlex</strong><span>People intelligence</span></div>
-        <nav className="top-nav"><span className="nav-active">Learning insights</span><span>Career pathways</span></nav>
+        <nav className="top-nav" aria-label="Dashboard views">
+          <button type="button" className={activeView === "learning" ? "nav-active" : ""} onClick={() => setActiveView("learning")}>Learning insights</button>
+          <button type="button" className={activeView === "career" ? "nav-active" : ""} onClick={() => setActiveView("career")}>Career pathways</button>
+        </nav>
         <div className="planning-pill"><span /> 2026 planning cycle</div>
       </header>
 
@@ -148,6 +203,7 @@ function App() {
         ))}
       </section>
 
+      {activeView === "learning" ? <>
       <section className="chart-grid">
         <article className="panel chart-panel">
           <div className="panel-heading">
@@ -236,6 +292,40 @@ function App() {
           </table>
         </div>
       </section>
+      </> : (
+        <section className="panel recommendation-panel">
+          <div className="panel-heading recommendation-heading">
+            <div><h2>Career pathways</h2><p>Role progression options, readiness, open gaps, and estimated learning effort.</p></div>
+            <span className="result-count">{careerPathways.length} shown (up to 100)</span>
+          </div>
+          <div className="filters">
+            <select value={pathwayDepartment} onChange={(event) => setPathwayDepartment(event.target.value)} aria-label="Filter pathways by department">
+              <option value="">All departments</option>
+              {(summary?.budgets ?? []).map((budget) => <option key={budget.department}>{budget.department}</option>)}
+            </select>
+          </div>
+          {pathwaysError && <div className="error-banner" role="alert"><strong>Career pathways unavailable.</strong> {pathwaysError}</div>}
+          <div className="table-scroll">
+            <table>
+              <thead><tr><th>EMPLOYEE</th><th>CURRENT ROLE</th><th>NEXT ROLE</th><th>READINESS</th><th>OPEN GAPS</th><th>LEARNING PLAN</th></tr></thead>
+              <tbody>
+                {careerPathways.map((pathway) => (
+                  <tr key={pathway.employee_id}>
+                    <td><div className="employee-cell"><span className="avatar">{pathway.employee_id.slice(-2)}</span><span><b>{pathway.employee_id}</b><small>{pathway.department}</small></span></div></td>
+                    <td>{pathway.current_role}<small>{pathway.current_level}</small></td>
+                    <td>{pathway.next_role}<small>{pathway.next_level}</small></td>
+                    <td>{Number(pathway.readiness_score).toFixed(1)}%</td>
+                    <td>{pathway.total_gaps} <small>({pathway.critical_gaps} critical)</small></td>
+                    <td><b>{pathway.courses_needed} courses</b><small>{currency.format(Number(pathway.estimated_cost))} · {Number(pathway.estimated_hours).toFixed(0)} hours</small></td>
+                  </tr>
+                ))}
+                {pathwaysLoading && <tr><td className="empty-row" colSpan={6}>Loading career pathways...</td></tr>}
+                {!pathwaysLoading && careerPathways.length === 0 && <tr><td className="empty-row" colSpan={6}>No career pathways match this department.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <footer className="footer-note">
         <span>Decision traceability</span>
